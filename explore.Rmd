@@ -1,0 +1,64 @@
+---
+title: "Who We Serve"
+output:
+  beamer_presentation: default
+  ioslides_presentation: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(googlesheets4)
+library(hrbrthemes)
+
+extrafont::loadfonts()
+
+if(!sheets_has_token()){
+  sheets_auth(email = 'schneeman@gmail.com')
+}
+
+id <- NULL
+if(sheets_has_token()) {
+  sheet <- sheets_find(pattern = '2019 Fall Annual Survey Data_Breakdown by Scale')
+  id <- sheet$id
+}
+
+survey <- sheets_get(id)
+
+survey_df <- sheets_read(id, sheet=survey$sheet$name[1], skip = 2)
+```
+
+## Explore Austin 2019 Survey
+
+Survey Date: 2019
+
+## Explorer Gender Breakdown
+
+```{r gender}
+survey_df %>% group_by(Gender) %>% summarize(ct = n()) %>%
+  ggplot(aes(x=Gender, y=ct, fill=Gender)) +
+  geom_col() + theme_ipsum() +
+  scale_fill_ipsum() + theme(legend.position = "none")
+```
+
+## Explorer Grade Levels
+
+```{r grades, warning=FALSE}
+survey_df %>% group_by(Grade) %>% summarize(ct = n()) %>%
+  ggplot(aes(x=Grade, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none")
+```
+
+## Explorer Free Lunch
+
+```{r lunch, warning=FALSE}
+survey_df %>% mutate(`Do you receive free/reduced lunch?` = if_else(`Do you receive free/reduced lunch?` %in% c('Yes', 'No'), `Do you receive free/reduced lunch?`, "I don't know")) %>%
+  group_by(`Do you receive free/reduced lunch?`) %>% summarize(ct = n()) %>%
+  ggplot(aes(x=`Do you receive free/reduced lunch?`, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none")
+```
+
+## 
