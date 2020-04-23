@@ -12,6 +12,7 @@ library(tidyverse)
 library(googlesheets4)
 library(patchwork)
 library(hrbrthemes)
+library(janitor)
 
 extrafont::loadfonts()
 
@@ -27,7 +28,7 @@ if(sheets_has_token()) {
 
 survey <- sheets_get(id)
 
-survey_df <- sheets_read(id, sheet=survey$sheet$name[1], skip = 2)
+survey_df <- sheets_read(id, sheet=survey$sheet$name[1], skip = 2) %>% clean_names()
 ```
 
 ## Explore Austin 2019 Survey
@@ -37,39 +38,64 @@ Survey Date: 2019
 ## Explorer Gender Breakdown
 
 ```{r gender}
-survey_df %>% group_by(Gender) %>% summarize(ct = n()) %>%
-  ggplot(aes(x=Gender, y=ct, fill=Gender)) +
+survey_df %>% group_by(gender) %>% summarize(ct = n()) %>%
+  ggplot(aes(x=gender, y=ct, fill=gender)) +
   geom_col() + theme_ipsum() +
   scale_fill_ipsum() + theme(legend.position = "none")
 ```
 
 ## School Data
 ```{r school, warning = FALSE}
-grades <- survey_df %>% group_by(Grade) %>% summarize(ct = n()) %>%
-  ggplot(aes(x=Grade, y=ct)) +
+grades <- survey_df %>% group_by(grade) %>% summarize(ct = n()) %>%
+  ggplot(aes(x=grade, y=ct)) +
   geom_col() + theme_ipsum() +
   theme(legend.position = "none") + labs(
-    title = "Explorer Grade Level"
+    title = "Grade Level"
   )
 
-lunch <- survey_df %>% mutate(`Do you receive free/reduced lunch?` = if_else(`Do you receive free/reduced lunch?` %in% c('Yes', 'No'), `Do you receive free/reduced lunch?`, "I don't know")) %>%
-  group_by(`Do you receive free/reduced lunch?`) %>% summarize(ct = n()) %>%
-  ggplot(aes(x=`Do you receive free/reduced lunch?`, y=ct)) +
+lunch <- survey_df %>% mutate(do_you_receive_free_reduced_lunch = if_else(do_you_receive_free_reduced_lunch %in% c('Yes', 'No'), do_you_receive_free_reduced_lunch, "I don't know")) %>%
+  group_by(do_you_receive_free_reduced_lunch) %>% summarize(ct = n()) %>%
+  ggplot(aes(x=do_you_receive_free_reduced_lunch, y=ct)) +
   geom_col() + theme_ipsum() +
   theme(legend.position = "none") + labs(
-    title = "Explorer Free Lunch"
+    title = "Free Lunch"
   )
 
 last_gpa <- function(gpa_string) {
   parsed <- str_split(gpa_string, "\\|", simplify = TRUE)
-  parsed[length(parsed)]
+  parsed[length(parsed)] %>% str_trim()
 }
 
-survey_df %>% rowwise() %>%
-  mutate(last_gpa = last_gpa(`Overall Grade Point Average (GPA) in school`)) %>% View()
+# gotta use rowwise here to apply the function correctly
+gpa <- survey_df %>% rowwise() %>%
+  mutate(last_gpa = last_gpa(overall_grade_point_average_gpa_in_school)) %>% 
+  group_by(last_gpa) %>% summarize(ct = n()) %>%
+    ggplot(aes(x=last_gpa, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none") + labs(
+    title = "Most Recent GPA"
+  )
+
+absences <- survey_df %>% mutate(how_many_absences_have_you_had_in_the_last_2_weeks_of_school = as.character(how_many_absences_have_you_had_in_the_last_2_weeks_of_school)) %>%
+  group_by(how_many_absences_have_you_had_in_the_last_2_weeks_of_school) %>%
+  summarize(ct = n()) %>%
+  ggplot(aes(x=how_many_absences_have_you_had_in_the_last_2_weeks_of_school, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none") + labs(
+    title = "Two-Week Absence Count"
+  )
+
+extracurriculars <- survey_df %>% mutate(how_many_extracurriculars_do_you_participate_in_at_school = as.character(how_many_extracurriculars_do_you_participate_in_at_school)) %>%
+  group_by(how_many_extracurriculars_do_you_participate_in_at_school) %>%
+  summarize(ct = n()) %>%
+  ggplot(aes(x=how_many_extracurriculars_do_you_participate_in_at_school, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none") + labs(
+    title = "Number of\nExtracurricular Activities"
+  )
 
 # arrange the plots
-lunch + grades
+(grades + lunch) / (gpa + absences + extracurriculars)
 ```
 
 
