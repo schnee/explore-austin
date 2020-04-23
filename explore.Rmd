@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 library(tidyverse)
 library(googlesheets4)
+library(patchwork)
 library(hrbrthemes)
 
 extrafont::loadfonts()
@@ -42,23 +43,33 @@ survey_df %>% group_by(Gender) %>% summarize(ct = n()) %>%
   scale_fill_ipsum() + theme(legend.position = "none")
 ```
 
-## Explorer Grade Levels
-
-```{r grades, warning=FALSE}
-survey_df %>% group_by(Grade) %>% summarize(ct = n()) %>%
+## School Data
+```{r school, warning = FALSE}
+grades <- survey_df %>% group_by(Grade) %>% summarize(ct = n()) %>%
   ggplot(aes(x=Grade, y=ct)) +
   geom_col() + theme_ipsum() +
-  theme(legend.position = "none")
-```
+  theme(legend.position = "none") + labs(
+    title = "Explorer Grade Level"
+  )
 
-## Explorer Free Lunch
-
-```{r lunch, warning=FALSE}
-survey_df %>% mutate(`Do you receive free/reduced lunch?` = if_else(`Do you receive free/reduced lunch?` %in% c('Yes', 'No'), `Do you receive free/reduced lunch?`, "I don't know")) %>%
+lunch <- survey_df %>% mutate(`Do you receive free/reduced lunch?` = if_else(`Do you receive free/reduced lunch?` %in% c('Yes', 'No'), `Do you receive free/reduced lunch?`, "I don't know")) %>%
   group_by(`Do you receive free/reduced lunch?`) %>% summarize(ct = n()) %>%
   ggplot(aes(x=`Do you receive free/reduced lunch?`, y=ct)) +
   geom_col() + theme_ipsum() +
-  theme(legend.position = "none")
+  theme(legend.position = "none") + labs(
+    title = "Explorer Free Lunch"
+  )
+
+last_gpa <- function(gpa_string) {
+  parsed <- str_split(gpa_string, "\\|", simplify = TRUE)
+  parsed[length(parsed)]
+}
+
+survey_df %>% rowwise() %>%
+  mutate(last_gpa = last_gpa(`Overall Grade Point Average (GPA) in school`)) %>% View()
+
+# arrange the plots
+lunch + grades
 ```
 
-## 
+
