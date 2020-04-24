@@ -13,6 +13,7 @@ library(googlesheets4)
 library(patchwork)
 library(hrbrthemes)
 library(janitor)
+library(forcats)
 
 extrafont::loadfonts()
 
@@ -128,4 +129,49 @@ extracurriculars <- survey_df %>% mutate(how_many_extracurriculars_do_you_partic
 (grades + gpa) / (lunch + absences + extracurriculars)
 ```
 
+## Home Life
+```{r home, warnings=FALSE} 
+
+resident_levels <- rep(1:6) %>% as.character
+resident_levels <- c(resident_levels, "7 or more", "I don't know")
+
+residents <- survey_df %>% 
+  mutate(how_many_people_live_in_your_house = na_if(how_many_people_live_in_your_house, c("IDK"))) %>%
+  mutate(how_many_people_live_in_your_house = na_if(how_many_people_live_in_your_house, c("NULL"))) %>% 
+  mutate(how_many_people_live_in_your_house = as.character(how_many_people_live_in_your_house)) %>%
+  mutate(how_many_people_live_in_your_house = if_else(how_many_people_live_in_your_house %in% resident_levels, how_many_people_live_in_your_house, "7 or more")) %>%
+  mutate(how_many_people_live_in_your_house = as.character(how_many_people_live_in_your_house)) %>%
+    mutate(how_many_people_live_in_your_house = if_else(is.na(how_many_people_live_in_your_house), "I don't know", how_many_people_live_in_your_house)) %>%
+  mutate(how_many_people_live_in_your_house = factor(how_many_people_live_in_your_house, levels = resident_levels)) %>%
+  group_by(how_many_people_live_in_your_house) %>%
+  summarize(ct = n()) %>%
+    ggplot(aes(x=how_many_people_live_in_your_house, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Household Residents",
+    x = "Residents"
+  )
+
+
+# Languages
+
+languages <- survey_df %>%
+  group_by(what_language_is_spoken_at_home_circle_all_that_apply_separate_languages_with_a_vertical_bar_e_g) %>% 
+  summarise(ct = n()) %>%
+  mutate(what_language_is_spoken_at_home_circle_all_that_apply_separate_languages_with_a_vertical_bar_e_g = fct_reorder(what_language_is_spoken_at_home_circle_all_that_apply_separate_languages_with_a_vertical_bar_e_g, ct, .desc = TRUE)) %>% 
+  ggplot(aes(x=what_language_is_spoken_at_home_circle_all_that_apply_separate_languages_with_a_vertical_bar_e_g, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Household Languages",
+    x = "Languages"
+  )
+
+
+residents + languages
+
+```
 

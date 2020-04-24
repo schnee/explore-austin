@@ -19,3 +19,11 @@ survey_df %>% group_by(`Name of School`, `Grade`) %>% summarize(ct = n()) %>%
   mutate(ct = as.factor(ct)) %>%
   ggplot(aes(x=`Name of School`, y=`Grade`, fill=ct)) + geom_tile() +
   scale_fill_discrete()
+
+
+survey_df %>% mutate(`Do you receive free/reduced lunch?` = if_else(`Do you receive free/reduced lunch?` %in% c('Yes', 'No'), `Do you receive free/reduced lunch?`, "I don't know")) %>%
+  group_by(`Do you receive free/reduced lunch?`) %>% summarize(ct = n()) %>%
+  ggplot(aes(x=`Do you receive free/reduced lunch?`, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none")
+
