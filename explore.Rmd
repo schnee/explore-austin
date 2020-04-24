@@ -57,7 +57,9 @@ lunch <- survey_df %>% mutate(do_you_receive_free_reduced_lunch = if_else(do_you
   group_by(do_you_receive_free_reduced_lunch) %>% summarize(ct = n()) %>%
   ggplot(aes(x=do_you_receive_free_reduced_lunch, y=ct)) +
   geom_col() + theme_ipsum() +
-  theme(legend.position = "none") + labs(
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
     title = "Free Lunch"
   )
 
@@ -66,36 +68,64 @@ last_gpa <- function(gpa_string) {
   parsed[length(parsed)] %>% str_trim()
 }
 
+# gpa should be ordered descending. This is a bit difficult b/c the GPA values are pretty diverse and
+# not exactly predictable in general. But since this is a static survey, we can hard code for
+# now
+
+gpa_levels <- c("A/A+", "A-", "B+", "B", "B-",  "C+", "C" , "C-", "D or lower", "Not Sure" )
+
+# we will replace the "No Clue" and "NA" with "Not Sure" down below
+
 # gotta use rowwise here to apply the function correctly
 gpa <- survey_df %>% rowwise() %>%
-  mutate(last_gpa = last_gpa(overall_grade_point_average_gpa_in_school)) %>% 
+  mutate(last_gpa = last_gpa(overall_grade_point_average_gpa_in_school),
+         last_gpa = if_else(last_gpa %in% gpa_levels, last_gpa, "Not Sure"),
+         last_gpa = factor(last_gpa, levels = gpa_levels)) %>% 
   group_by(last_gpa) %>% summarize(ct = n()) %>%
     ggplot(aes(x=last_gpa, y=ct)) +
   geom_col() + theme_ipsum() +
-  theme(legend.position = "none") + labs(
-    title = "Most Recent GPA"
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Most Recent GPA",
+    x = "GPA"
   )
 
+# need to order the absences
+
+absence_levels <- c("0", "1", "2", "2 or 3", "3", "4", "5", "6", "7", "8", "9", "10", "Unknown")
+
 absences <- survey_df %>% mutate(how_many_absences_have_you_had_in_the_last_2_weeks_of_school = as.character(how_many_absences_have_you_had_in_the_last_2_weeks_of_school)) %>%
+  mutate(how_many_absences_have_you_had_in_the_last_2_weeks_of_school = if_else(how_many_absences_have_you_had_in_the_last_2_weeks_of_school == "None", "0", how_many_absences_have_you_had_in_the_last_2_weeks_of_school),
+         how_many_absences_have_you_had_in_the_last_2_weeks_of_school = if_else(how_many_absences_have_you_had_in_the_last_2_weeks_of_school == "NULL", "Unknown", how_many_absences_have_you_had_in_the_last_2_weeks_of_school)) %>%
+  mutate(how_many_absences_have_you_had_in_the_last_2_weeks_of_school = factor(how_many_absences_have_you_had_in_the_last_2_weeks_of_school, levels = absence_levels)) %>%
   group_by(how_many_absences_have_you_had_in_the_last_2_weeks_of_school) %>%
   summarize(ct = n()) %>%
   ggplot(aes(x=how_many_absences_have_you_had_in_the_last_2_weeks_of_school, y=ct)) +
   geom_col() + theme_ipsum() +
-  theme(legend.position = "none") + labs(
-    title = "Two-Week Absence Count"
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Two-Week Absence Count",
+    x = "Absences"
   )
 
-extracurriculars <- survey_df %>% mutate(how_many_extracurriculars_do_you_participate_in_at_school = as.character(how_many_extracurriculars_do_you_participate_in_at_school)) %>%
+extracurriculars <- survey_df %>% mutate(how_many_extracurriculars_do_you_participate_in_at_school = as.character(how_many_extracurriculars_do_you_participate_in_at_school),
+                                         how_many_extracurriculars_do_you_participate_in_at_school = if_else(how_many_extracurriculars_do_you_participate_in_at_school == "4", "4 or more", how_many_extracurriculars_do_you_participate_in_at_school)) %>%
+  filter(how_many_extracurriculars_do_you_participate_in_at_school != "NULL") %>%
   group_by(how_many_extracurriculars_do_you_participate_in_at_school) %>%
   summarize(ct = n()) %>%
   ggplot(aes(x=how_many_extracurriculars_do_you_participate_in_at_school, y=ct)) +
   geom_col() + theme_ipsum() +
-  theme(legend.position = "none") + labs(
-    title = "Number of\nExtracurricular Activities"
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Number of\nExtracurricular Activities",
+    x = "Extracurriculars"
   )
 
 # arrange the plots
-(grades + lunch) / (gpa + absences + extracurriculars)
+(grades + gpa) / (lunch + absences + extracurriculars)
 ```
 
 
