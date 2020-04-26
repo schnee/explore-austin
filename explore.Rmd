@@ -41,7 +41,7 @@ Survey Date: 2019
 ```{r gender}
 survey_df %>% group_by(gender) %>% summarize(ct = n()) %>%
   ggplot(aes(x=gender, y=ct, fill=gender)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   scale_fill_ipsum() + theme(legend.position = "none")
 ```
 
@@ -49,7 +49,7 @@ survey_df %>% group_by(gender) %>% summarize(ct = n()) %>%
 ```{r school, warning = FALSE}
 grades <- survey_df %>% group_by(grade) %>% summarize(ct = n()) %>%
   ggplot(aes(x=grade, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none") + labs(
     title = "Grade Level"
   )
@@ -57,7 +57,7 @@ grades <- survey_df %>% group_by(grade) %>% summarize(ct = n()) %>%
 lunch <- survey_df %>% mutate(do_you_receive_free_reduced_lunch = if_else(do_you_receive_free_reduced_lunch %in% c('Yes', 'No'), do_you_receive_free_reduced_lunch, "I don't know")) %>%
   group_by(do_you_receive_free_reduced_lunch) %>% summarize(ct = n()) %>%
   ggplot(aes(x=do_you_receive_free_reduced_lunch, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -84,7 +84,7 @@ gpa <- survey_df %>% rowwise() %>%
          last_gpa = factor(last_gpa, levels = gpa_levels)) %>% 
   group_by(last_gpa) %>% summarize(ct = n()) %>%
     ggplot(aes(x=last_gpa, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -103,7 +103,7 @@ absences <- survey_df %>% mutate(how_many_absences_have_you_had_in_the_last_2_we
   group_by(how_many_absences_have_you_had_in_the_last_2_weeks_of_school) %>%
   summarize(ct = n()) %>%
   ggplot(aes(x=how_many_absences_have_you_had_in_the_last_2_weeks_of_school, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -117,7 +117,7 @@ extracurriculars <- survey_df %>% mutate(how_many_extracurriculars_do_you_partic
   group_by(how_many_extracurriculars_do_you_participate_in_at_school) %>%
   summarize(ct = n()) %>%
   ggplot(aes(x=how_many_extracurriculars_do_you_participate_in_at_school, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -130,7 +130,7 @@ extracurriculars <- survey_df %>% mutate(how_many_extracurriculars_do_you_partic
 ```
 
 ## Home Life
-```{r home, warnings=FALSE} 
+```{r home, warning=FALSE} 
 
 resident_levels <- rep(1:6) %>% as.character
 resident_levels <- c(resident_levels, "7 or more", "I don't know")
@@ -146,7 +146,7 @@ residents <- survey_df %>%
   group_by(how_many_people_live_in_your_house) %>%
   summarize(ct = n()) %>%
     ggplot(aes(x=how_many_people_live_in_your_house, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -162,7 +162,7 @@ languages <- survey_df %>%
   summarise(ct = n()) %>%
   mutate(what_language_is_spoken_at_home_circle_all_that_apply_separate_languages_with_a_vertical_bar_e_g = fct_reorder(what_language_is_spoken_at_home_circle_all_that_apply_separate_languages_with_a_vertical_bar_e_g, ct, .desc = TRUE)) %>% 
   ggplot(aes(x=what_language_is_spoken_at_home_circle_all_that_apply_separate_languages_with_a_vertical_bar_e_g, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -181,7 +181,7 @@ siblings <- survey_df %>%
   summarise(ct = n()) %>%
   mutate(how_many_siblings_do_you_have = factor(how_many_siblings_do_you_have, levels = sib_levels)) %>% 
   ggplot(aes(x=how_many_siblings_do_you_have, y=ct)) +
-  geom_col() + theme_ipsum() +
+  geom_col(fill="#84880f") + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -189,8 +189,103 @@ siblings <- survey_df %>%
     x = "Siblings"
   )
 
+#siblings over 20
 
-residents + siblings + languages
+siblings_over_twenty <- survey_df %>% filter(how_many_siblings_do_you_have != "None") %>%
+  mutate(how_many_of_your_siblings_are_over_the_age_of_20 = as.character(how_many_of_your_siblings_are_over_the_age_of_20),
+         how_many_of_your_siblings_are_over_the_age_of_20 = if_else(how_many_of_your_siblings_are_over_the_age_of_20 == "None", "0", how_many_of_your_siblings_are_over_the_age_of_20)) %>%
+  group_by(how_many_of_your_siblings_are_over_the_age_of_20) %>% 
+  summarise(ct = n()) %>%
+  mutate(how_many_of_your_siblings_are_over_the_age_of_20 = factor(how_many_of_your_siblings_are_over_the_age_of_20, levels = sib_levels)) %>% 
+  ggplot(aes(x=how_many_of_your_siblings_are_over_the_age_of_20, y=ct)) +
+  geom_col(fill="#84880f") + theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Number of Siblings\nOver 20",
+    x = "Siblings"
+  )
+
+# siblings attending/attended college
+
+siblings_college <- survey_df %>% filter(how_many_siblings_do_you_have != "None") %>%
+  mutate(how_many_of_your_siblings_attend_college_or_are_college_graduates = as.character(how_many_of_your_siblings_attend_college_or_are_college_graduates),
+         how_many_of_your_siblings_attend_college_or_are_college_graduates = if_else(how_many_of_your_siblings_attend_college_or_are_college_graduates == "None", "0", how_many_of_your_siblings_attend_college_or_are_college_graduates)) %>%
+  group_by(how_many_of_your_siblings_attend_college_or_are_college_graduates) %>% 
+  summarise(ct = n()) %>%
+  mutate(how_many_of_your_siblings_attend_college_or_are_college_graduates = factor(how_many_of_your_siblings_attend_college_or_are_college_graduates, levels = sib_levels)) %>% 
+  ggplot(aes(x=how_many_of_your_siblings_attend_college_or_are_college_graduates, y=ct)) +
+  geom_col(fill="#84880f") + theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Number of Siblings\nAttending/Attended College",
+    x = "Siblings"
+  )
+
+# parental education
+
+last_edu <- function(edu_string) {
+  parsed <- str_split(edu_string, "\\|", simplify = TRUE)
+  parsed[length(parsed)] %>% str_trim()
+}
+
+replace_values <- function(edu_string) {
+  edu_string = na_if(edu_string, "NA")
+  edu_string = na_if(edu_string, "N/A")
+  edu_string = if_else(edu_string == "Education after high school other than 2-year or 4-year (e.g. trade school)", "Completed trade/technical school", edu_string)
+  edu_string = if_else(edu_string == "Some college (community/junior college or more 4-years college study)", "Some university/college", edu_string)
+  edu_string = if_else(edu_string == "Some college (community/junior college or some 4-year college study)", "Some university/college", edu_string) 
+  edu_string = if_else(edu_string == "Less than high schoo", "Less than high school", edu_string)
+  edu_string = if_else(edu_string == "Completed high school","High school graduate (or G.E.D)",   edu_string)
+  edu_string = if_else(edu_string == "High school graduage (or G.E.D)", "High school graduate (or G.E.D)", edu_string)
+  edu_string = if_else(edu_string == "Completed univsersity/college", "Completed university/college", edu_string)
+  edu_string
+}
+
+father_edu_plot <- survey_df %>%  
+  rowwise() %>%
+  mutate(father_edu = last_edu(what_is_the_highest_level_of_education_of_your_parents_father),
+         father_edu = replace_values(father_edu),
+         father_edu = as.character(father_edu)) %>% 
+  group_by(father_edu) %>% 
+  summarise(ct = n()) %>%
+  mutate(father_edu = fct_reorder(father_edu, ct, .desc=TRUE)) %>% 
+  ggplot(aes(x=father_edu, y=ct)) +
+  geom_col(fill="#84880f") + theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Father's Education Level",
+    x = "Education"
+  )
+
+mother_edu_plot <- survey_df %>%  
+  rowwise() %>%
+  mutate(mother_edu = last_edu(what_is_the_highest_level_of_education_of_your_parents_mother),
+         mother_edu = replace_values(mother_edu),
+         mother_edu = as.character(mother_edu)) %>% 
+  group_by(mother_edu) %>% 
+  summarise(ct = n()) %>% 
+  mutate(mother_edu = fct_reorder(mother_edu, ct, .desc=TRUE)) %>% 
+  ggplot(aes(x=mother_edu, y=ct)) +
+  geom_col(fill="#84880f") + theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Mother's Education Level",
+    x = "Education"
+  )
+
+(residents + siblings) / (siblings_over_twenty + languages)
+
+```
+
+## Household Education
+
+```{r household_edu, warning=FALSE}
+
+siblings_college + father_edu_plot + mother_edu_plot
 
 ```
 
