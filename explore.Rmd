@@ -170,8 +170,27 @@ languages <- survey_df %>%
     x = "Languages"
   )
 
+# siblings
 
-residents + languages
+sib_levels <- 0:7 %>% as.character()
+
+siblings <- survey_df %>%
+  mutate(how_many_siblings_do_you_have = as.character(how_many_siblings_do_you_have),
+         how_many_siblings_do_you_have = if_else(how_many_siblings_do_you_have == "None", "0", how_many_siblings_do_you_have)) %>%
+  group_by(how_many_siblings_do_you_have) %>% 
+  summarise(ct = n()) %>%
+  mutate(how_many_siblings_do_you_have = factor(how_many_siblings_do_you_have, levels = sib_levels)) %>% 
+  ggplot(aes(x=how_many_siblings_do_you_have, y=ct)) +
+  geom_col() + theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  labs(
+    title = "Number of Siblings",
+    x = "Siblings"
+  )
+
+
+residents + siblings + languages
 
 ```
 
