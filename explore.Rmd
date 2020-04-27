@@ -230,19 +230,19 @@ replace_values <- function(edu_string) {
   edu_string = if_else(edu_string == "Completed high school","High school graduate (or G.E.D)",   edu_string)
   edu_string = if_else(edu_string == "High school graduage (or G.E.D)", "High school graduate (or G.E.D)", edu_string)
   edu_string = if_else(edu_string == "Completed univsersity/college", "Completed university/college", edu_string)
+  edu_string = if_else(edu_string == "College graduate (bachelor's degree)", "Completed university/college", edu_string)
   edu_string
 }
 
-father_edu_plot <- survey_df %>%  
+father_edu_plot <- survey_df %>%
   rowwise() %>%
   mutate(father_edu = last_edu(what_is_the_highest_level_of_education_of_your_parents_father),
          father_edu = replace_values(father_edu),
          father_edu = as.character(father_edu)) %>% 
-  group_by(father_edu) %>% 
-  summarise(ct = n()) %>%
-  mutate(father_edu = fct_reorder(father_edu, ct, .desc=TRUE)) %>% 
-  ggplot(aes(x=father_edu, y=ct)) +
-  geom_col(fill=base_color) + theme_ipsum() +
+  ungroup() %>%  
+  mutate(father_edu = fct_lump_n(father_edu, n=6)) %>% 
+  ggplot(aes(x=fct_infreq(father_edu))) +
+  geom_bar(fill=base_color) + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -255,11 +255,10 @@ mother_edu_plot <- survey_df %>%
   mutate(mother_edu = last_edu(what_is_the_highest_level_of_education_of_your_parents_mother),
          mother_edu = replace_values(mother_edu),
          mother_edu = as.character(mother_edu)) %>% 
-  group_by(mother_edu) %>% 
-  summarise(ct = n()) %>% 
-  mutate(mother_edu = fct_reorder(mother_edu, ct, .desc=TRUE)) %>% 
-  ggplot(aes(x=mother_edu, y=ct)) +
-  geom_col(fill=base_color) + theme_ipsum() +
+  ungroup() %>%
+  mutate(mother_edu = fct_lump_n(mother_edu, n=6)) %>% 
+  ggplot(aes(x=fct_infreq(mother_edu))) +
+  geom_bar(fill=base_color) + theme_ipsum() +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(
@@ -317,8 +316,52 @@ siblings_college + father_edu_plot + mother_edu_plot
 
 ```
 
-## Post High School
+## Post High School Plans
 
 ```{r post_high, warning=FALSE}
 post_high_school
+```
+
+## Social Capital Metrics
+\fontsize{8}{6}
+\selectfont
+```{r social_cap_data, warning=FALSE}
+
+# See that \font... stuff up above? that is to reduce the font size to fit the table
+# that we're generating onto one page. Sort of clunky
+
+social_cap <- survey_df %>% select(name, knows_how_to_fix_a_car:owns_a_car)
+
+cap_long <- social_cap %>% 
+  pivot_longer(knows_how_to_fix_a_car:owns_a_car, names_to = "cap_measure", values_to = "value") %>%
+  mutate(value = na_if(value, "Yes | No"),
+         value = na_if(value,  "IDK"),
+         value = na_if(value, "I don't know"),
+         value = na_if(value, "`Yes"))
+
+cap_long %>% count(cap_measure,value) %>% 
+  pivot_wider(id_cols = "cap_measure", names_from = "value", values_from = "n") %>% 
+  arrange(desc(No)) %>% knitr::kable(col.names = c("Social Capital Measure", "No", "Yes", "NA"))
+
+
+```
+
+## Social Capital Distribution
+These say the same thing - pick one?
+```{r soc_cap_dist, warning=FALSE}
+
+cap_hist <- cap_long %>%
+  mutate(numeric_value = if_else(value == "No", 0, 1)) %>%
+  group_by(name) %>% tally(numeric_value) %>%
+  ggplot(aes(x=n)) + geom_histogram(binwidth = 1, fill=base_color) +
+  theme_ipsum()
+
+cap_density <- cap_long %>%
+  mutate(numeric_value = if_else(value == "No", 0, 1)) %>%
+  group_by(name) %>% tally(numeric_value) %>%
+  ggplot(aes(x=n)) + geom_density(fill = base_color) +
+  theme_ipsum()
+
+cap_hist + cap_density
+
 ```
