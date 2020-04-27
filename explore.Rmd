@@ -353,13 +353,15 @@ These say the same thing - pick one?
 cap_hist <- cap_long %>%
   mutate(numeric_value = if_else(value == "No", 0, 1)) %>%
   group_by(name) %>% tally(numeric_value) %>%
-  ggplot(aes(x=n)) + geom_histogram(binwidth = 1, fill=base_color) +
+  ggplot(aes(x=n)) + 
+  geom_histogram(binwidth = 1, fill=base_color) +
   theme_ipsum()
 
 cap_density <- cap_long %>%
   mutate(numeric_value = if_else(value == "No", 0, 1)) %>%
   group_by(name) %>% tally(numeric_value) %>%
-  ggplot(aes(x=n)) + geom_density(fill = base_color) +
+  ggplot(aes(x=n)) + 
+  geom_density(fill = base_color, color=base_color, alpha=0.5) +
   theme_ipsum()
 
 cap_hist + cap_density
