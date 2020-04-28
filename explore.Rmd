@@ -35,11 +35,19 @@ if(!file.exists(survey_fn)){
   
   survey <- sheets_get(id)
   
-  survey_df <- sheets_read(id, sheet=survey$sheet$name[1], skip = 2) %>% clean_names()
+  survey_df <- sheets_read(id, sheet=survey$sheet$name[1], skip = 2)
   saveRDS(survey_df, survey_fn)
 } else {
   survey_df <- readRDS(survey_fn)
 }
+
+survey_q <- tibble(
+  questions = colnames(survey_df)
+)
+
+survey_df <- survey_df %>% clean_names()
+
+survey_q$cleaned <- colnames(survey_df)
 
 base_color <- "#4D7637"
 
@@ -405,4 +413,99 @@ aces %>% pivot_longer(cols = i_am_an_action_oriented_person:i_am_a_strong_commun
   )
 
 
+```
+
+## Self-Efficacy
+
+```{r self-efficacy, warning=FALSE}
+
+# wow, this was a pain. needed to convert to character and then back to numeric
+se <- survey_df %>% 
+  select(name, i_can_always_manage_to_solve_difficult_problems_if_i_try_hard_enough:i_can_usually_handle_whatever_comes_my_way) %>%
+  mutate(thanks_to_my_resourcefulness_i_know_how_to_handle_unforeseen_situations = map_chr(thanks_to_my_resourcefulness_i_know_how_to_handle_unforeseen_situations, 1, .default = NA)) %>%
+  mutate(thanks_to_my_resourcefulness_i_know_how_to_handle_unforeseen_situations = as.numeric(thanks_to_my_resourcefulness_i_know_how_to_handle_unforeseen_situations))
+
+
+
+se %>% pivot_longer(cols = -name,
+                      names_to = "se_metric", values_to = "measure") %>%
+  mutate(measure = na_if(measure, "IDK")) %>%
+  ggplot(aes(x=measure, group=se_metric)) + geom_density(fill=base_color) + 
+  facet_wrap(~se_metric) +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        #axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y.left = element_blank(),
+        axis.title.y = element_blank()) + 
+  labs(
+    x = "Selection"
+  )
+
+```
+
+## Overall Self Efficacy Distribution
+
+```{r overall_self_eff, warning=FALSE}
+
+se %>% pivot_longer(cols = -name,
+                      names_to = "se_metric", values_to = "measure") %>%
+  mutate(measure = na_if(measure, "IDK")) %>%
+  group_by(name) %>%
+  tally(wt = measure) %>%
+  ggplot(aes(x=n)) + 
+  geom_density(fill = base_color, color=base_color) +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        #axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y.left = element_blank(),
+        axis.title.y = element_blank()) + 
+  labs(
+    x = "Weighted Self-Efficacy"
+  )
+
+  
+
+```
+
+## Overall Grit Distribution
+
+```{r grit, warning=FALSE}
+
+# wow, this was a pain. needed to convert to character and then back to numeric
+grit <- survey_df %>% 
+  select(name, new_ideas_and_projects_sometimes_distract_me_from_previous_ones:i_am_diligent)
+
+
+grit %>% pivot_longer(cols = -name,
+                      names_to = "grit_metric", values_to = "measure") %>%
+  group_by(name) %>%
+  tally(wt = measure) %>%
+  ggplot(aes(x=n)) + 
+  geom_density(fill = base_color, color=base_color) +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        #axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y.left = element_blank(),
+        axis.title.y = element_blank()) + 
+  labs(
+    x = "Grit Score"
+  )
+```
+
+## Individual Grit Distributions
+
+```{r indiv_grit, warning=FALSE}
+
+grit %>% pivot_longer(cols = -name,
+                      names_to = "grit_metric", values_to = "measure") %>%
+  ggplot(aes(x=measure, group=grit_metric)) + geom_density(fill=base_color) + 
+  facet_wrap(~grit_metric) +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        #axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y.left = element_blank(),
+        axis.title.y = element_blank()) + 
+  labs(
+    x = "Selection"
+  )
 ```
