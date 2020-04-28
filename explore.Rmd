@@ -14,22 +14,32 @@ library(patchwork)
 library(hrbrthemes)
 library(janitor)
 library(forcats)
+library(here)
 
 extrafont::loadfonts()
 
-if(!sheets_has_token()){
-  sheets_auth(email = 'schneeman@gmail.com')
+survey_fn <- here::here("data/survey.RDS")
+survey_df <- tibble()
+
+if(!file.exists(survey_fn)){
+  
+  if(!sheets_has_token()){
+    sheets_auth(email = 'schneeman@gmail.com')
+  }
+  
+  id <- NULL
+  if(sheets_has_token()) {
+    sheet <- sheets_find(pattern = '2019 Fall Annual Survey Data_Breakdown by Scale')
+    id <- sheet$id
+  }
+  
+  survey <- sheets_get(id)
+  
+  survey_df <- sheets_read(id, sheet=survey$sheet$name[1], skip = 2) %>% clean_names()
+  saveRDS(survey_df, survey_fn)
+} else {
+  survey_df <- readRDS(survey_fn)
 }
-
-id <- NULL
-if(sheets_has_token()) {
-  sheet <- sheets_find(pattern = '2019 Fall Annual Survey Data_Breakdown by Scale')
-  id <- sheet$id
-}
-
-survey <- sheets_get(id)
-
-survey_df <- sheets_read(id, sheet=survey$sheet$name[1], skip = 2) %>% clean_names()
 
 base_color <- "#4D7637"
 
