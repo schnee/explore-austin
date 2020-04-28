@@ -330,7 +330,8 @@ post_high_school
 # See that \font... stuff up above? that is to reduce the font size to fit the table
 # that we're generating onto one page. Sort of clunky
 
-social_cap <- survey_df %>% select(name, knows_how_to_fix_a_car:owns_a_car)
+social_cap <- survey_df %>% 
+  select(name, knows_how_to_fix_a_car:owns_a_car)
 
 cap_long <- social_cap %>% 
   pivot_longer(knows_how_to_fix_a_car:owns_a_car, names_to = "cap_measure", values_to = "value") %>%
@@ -346,24 +347,52 @@ cap_long %>% count(cap_measure,value) %>%
 
 ```
 
-## Social Capital Distribution
-These say the same thing - pick one?
+## Social Capital Score Distribution
 ```{r soc_cap_dist, warning=FALSE}
-
-cap_hist <- cap_long %>%
-  mutate(numeric_value = if_else(value == "No", 0, 1)) %>%
-  group_by(name) %>% tally(numeric_value) %>%
-  ggplot(aes(x=n)) + 
-  geom_histogram(binwidth = 1, fill=base_color) +
-  theme_ipsum()
 
 cap_density <- cap_long %>%
   mutate(numeric_value = if_else(value == "No", 0, 1)) %>%
   group_by(name) %>% tally(numeric_value) %>%
   ggplot(aes(x=n)) + 
-  geom_density(fill = base_color, color=base_color, alpha=0.5) +
+  geom_density(fill = base_color, color=base_color) +
   theme_ipsum()
 
-cap_hist + cap_density
+cap_density
+
+```
+
+## ACES Framework
+
+```{r aces-framework, warning=FALSE}
+
+aces <- survey_df %>% 
+  select(name, i_am_an_action_oriented_person:i_am_a_strong_communicator)
+
+aces_coded <- tribble(
+  ~level, ~code,
+   "Strongly Agree", 5,
+   "Agree", 4,
+   "Neither agree nor disagree", 3,
+   "Disagree", 2,
+   "Strongly Disagree", 1
+)
+
+aces <- aces %>%
+  mutate_at(vars(i_am_an_action_oriented_person:i_am_a_strong_communicator), 
+            ~factor(., levels = aces_coded$level))
+
+aces %>% pivot_longer(cols = i_am_an_action_oriented_person:i_am_a_strong_communicator,
+                      names_to = "aces_metric", values_to = "measure") %>%
+  ggplot(aes(x=measure, group=aces_metric)) + geom_density(fill=base_color) + 
+  facet_wrap(~aces_metric) +
+  theme_ipsum() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y.left = element_blank(),
+        axis.title.y = element_blank()) + 
+  labs(
+    x = "Selection"
+  )
+
 
 ```
